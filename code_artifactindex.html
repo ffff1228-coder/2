@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 猜拳冒險王：終極大對決</title>
+  <!-- 引入 Google Fonts：現代黑體與電玩數字字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================
+       1. 全域變數與基礎樣式設定
+       ========================================== */
+    :root {
+      --bg-dark: #0f172a;
+      --bg-panel: rgba(30, 41, 59, 0.85);
+      --border-glow: rgba(56, 189, 248, 0.35);
+      --gold: #fbbf24;
+      --gold-glow: rgba(251, 191, 36, 0.5);
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.5);
+      --magenta: #f43f5e;
+      --magenta-glow: rgba(244, 63, 94, 0.5);
+      --emerald: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(244, 63, 94, 0.15) 0%, transparent 40%),
+        linear-gradient(135deg, #0b1120 0%, #1e1b4b 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* 背景網格裝飾線 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ==========================================
+       2. 頂部音效控制與標題列
+       ========================================== */
+    .top-bar {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+
+    .sound-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-glow);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .sound-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-glow);
+      transform: translateY(-2px);
+    }
+
+    /* 主容器 */
+    .game-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 900px;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-glow);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      transition: transform 0.15s ease;
+    }
+
+    /* 畫面切換控制 */
+    .screen {
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================
+       3. 畫面一：冒險者登入與裝備選擇
+       ========================================== */
+    .game-title-box {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .game-subtitle {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--cyan);
+      border: 1px solid var(--cyan);
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .game-title {
+      font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+      font-weight: 900;
+      background: linear-gradient(90deg, #fff, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .input-section {
+      max-width: 480px;
+      margin: 0 auto 28px;
+      text-align: center;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--gold);
+    }
+
+    .name-input {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.8);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .name-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 18px var(--gold-glow);
+    }
+
+    .equip-heading {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-main);
+    }
+
+    .equip-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .equip-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 2px solid rgba(148, 163, 184, 0.25);
+      border-radius: 18px;
+      padding: 20px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .equip-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+    }
+
+    .equip-card.selected {
+      border-color: var(--gold);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%);
+      box-shadow: 0 0 24px var(--gold-glow);
+      transform: translateY(-6px) scale(1.02);
+    }
+
+    .equip-card.selected::after {
+      content: "已裝備";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--gold);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .equip-icon {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+      display: block;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    }
+
+    .equip-name {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .equip-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, #f59e0b 100%);
+      color: #0f172a;
+      border: none;
+      padding: 16px 42px;
+      border-radius: 999px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 8px 25px var(--gold-glow);
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 12px 30px rgba(251, 191, 36, 0.7);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-easter-egg {
+      background: transparent;
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn-easter-egg:hover {
+      color: #fff;
+      border-color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* ==========================================
+       4. 畫面二：5勝制決鬥競技場
+       ========================================== */
+    /* 系統廣播橫幅 */
+    .system-broadcast {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(251, 191, 36, 0.15));
+      border-left: 4px solid var(--gold);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .broadcast-tag {
+      background: var(--gold);
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    /* 記分板 HUD */
+    .hud-board {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+    }
+
+    .fighter-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .fighter-info.computer {
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .fighter-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 1.05rem;
+    }
+
+    .weapon-pill {
+      background: rgba(251, 191, 36, 0.2);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 0.78rem;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+
+    .weapon-pill.ai {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--magenta);
+      color: #fda4af;
+    }
+
+    /* 5顆勝利星晶槽 */
+    .win-crystals {
+      display: flex;
+      gap: 6px;
+    }
+
+    .crystal {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .crystal.active-player {
+      background: var(--cyan);
+      border-color: #fff;
+      box-shadow: 0 0 12px var(--cyan-glow);
+      transform: scale(1.15);
+    }
+
+    .crystal.active-ai {
+      background: var(--magenta);
+      border-color: #fff;
+      box-shadow: 0 0 12px var(--magenta-glow);
+      transform: scale(1.15);
+    }
+
+    .round-badge {
+      text-align: center;
+      background: rgba(30, 41, 59, 0.95);
+      border: 2px solid var(--cyan);
+      padding: 8px 16px;
+      border-radius: 14px;
+    }
+
+    .round-label {
+      font-size: 0.72rem;
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .round-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    /* 中央對決舞台 */
+    .battle-stage {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.6) 75%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px 20px;
+      margin-bottom: 20px;
+      position: relative;
+      min-height: 210px;
+    }
+
+    .hand-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .hand-avatar {
+      width: 115px;
+      height: 115px;
+      border-radius: 50%;
+      background: rgba(30, 41, 59, 0.9);
+      border: 3px solid var(--cyan);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.6rem;
+      transition: all 0.25s ease;
+    }
+
+    .hand-avatar.ai {
+      border-color: var(--magenta);
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.25);
+    }
+
+    .hand-choice-text {
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px 14px;
+      border-radius: 999px;
+    }
+
+    .vs-emblem {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      font-style: italic;
+      background: linear-gradient(180deg, var(--gold), var(--magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.4));
+    }
+
+    /* 出拳集氣搖晃動畫 */
+    @keyframes shakeHand {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-16px) rotate(-10deg); }
+      75% { transform: translateY(8px) rotate(10deg); }
+    }
+
+    .shaking {
+      animation: shakeHand 0.25s ease-in-out infinite;
+    }
+
+    /* 畫面受擊震動特效 */
+    @keyframes arenaShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 4px); }
+      40% { transform: translate(8px, -4px); }
+      60% { transform: translate(-6px, -3px); }
+      80% { transform: translate(6px, 3px); }
+    }
+
+    .arena-shake {
+      animation: arenaShake 0.35s ease;
+    }
+
+    /* 回合結果橫幅 */
+    .result-banner {
+      text-align: center;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      margin-bottom: 22px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.25s ease;
+    }
+
+    .result-banner.win {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald);
+      color: #6ee7b7;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .result-banner.lose {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--magenta);
+      color: #fda4af;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+    }
+
+    .result-banner.draw {
+      background: rgba(251, 191, 36, 0.15);
+      border-color: var(--gold);
+      color: #fde68a;
+    }
+
+    /* 底部出拳操作區 */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .move-btn {
+      background: linear-gradient(180deg, rgba(51, 65, 85, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      border-radius: 18px;
+      padding: 18px 12px;
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .move-btn:hover:not(:disabled) {
+      transform: translateY(-6px);
+      border-color: var(--gold);
+      box-shadow: 0 10px 25px var(--gold-glow);
+    }
+
+    .move-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .move-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .move-emoji {
+      font-size: 2.5rem;
+    }
+
+    .move-label {
+      font-size: 1.15rem;
+      font-weight: 900;
+    }
+
+    .move-key {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* 終端機風格戰鬥紀錄框（呼應原始 Python 程式輸出） */
+    .combat-log {
+      background: #090d16;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      padding: 12px 16px;
+      height: 115px;
+      overflow-y: auto;
+      font-family: 'Noto Sans TC', monospace;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .combat-log p {
+      margin-bottom: 4px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+      padding-bottom: 3px;
+    }
+
+    /* ==========================================
+       5. 畫面三：最終結算畫面
+       ========================================== */
+    .settlement-box {
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .trophy-icon {
+      font-size: 5rem;
+      margin-bottom: 12px;
+      display: inline-block;
+      animation: bounceTrophy 1.5s ease-in-out infinite;
+    }
+
+    @keyframes bounceTrophy {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.08); }
+    }
+
+    .settlement-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .settlement-title.victory {
+      color: var(--gold);
+      text-shadow: 0 0 25px var(--gold-glow);
+    }
+
+    .settlement-title.defeat {
+      color: var(--magenta);
+      text-shadow: 0 0 25px var(--magenta-glow);
+    }
+
+    .final-score-pill {
+      display: inline-block;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid var(--cyan);
+      padding: 10px 28px;
+      border-radius: 999px;
+      margin: 14px 0 18px;
+      color: #fff;
+    }
+
+    .settlement-msg {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      max-width: 560px;
+      margin: 0 auto 28px;
+      line-height: 1.7;
+    }
+
+    .settlement-btns {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(51, 65, 85, 0.8);
+      color: #fff;
+      border: 2px solid rgba(148, 163, 184, 0.4);
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    /* 勝利彩帶 Canvas */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* 手機版響應式微調 */
+    @media (max-width: 680px) {
+      .equip-grid { grid-template-columns: 1fr; }
+      .hud-board { grid-template-columns: 1fr; text-align: center; }
+      .fighter-info, .fighter-info.computer { align-items: center; text-align: center; }
+      .hand-avatar { width: 90px; height: 90px; font-size: 2.8rem; }
+      .game-container { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 勝利慶祝彩帶畫布 -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- 右上角音效開關 -->
+  <div class="top-bar">
+    <button class="sound-btn" id="soundToggle" onclick="toggleSound()">
+      🔊 音效：開啟
+    </button>
+  </div>
+
+  <!-- 遊戲主容器 -->
+  <div class="game-container" id="gameContainer">
+
+    <!-- ==========================================
+         畫面一：冒險者登入與裝備選擇
+         ========================================== -->
+    <section class="screen active" id="setupScreen">
+      <div class="game-title-box">
+        <span class="game-subtitle">PYTHON RPG BATTLE EDITION</span>
+        <h1 class="game-title">🎮 猜拳冒險王：終極大對決 🎮</h1>
+      </div>
+
+      <!-- 1. 冒險者名字輸入 -->
+      <div class="input-section">
+        <label class="input-label" for="playerNameInput">✨ 請輸入你的冒險者名字：</label>
+        <input 
+          type="text" 
+          id="playerNameInput" 
+          class="name-input" 
+          placeholder="例如：星爆氣流斬、猜拳小霸王..." 
+          maxlength="12"
+        />
+      </div>
+
+      <!-- 2. 三大傳說裝備選擇 -->
+      <div class="equip-heading">🛡️ 【請選擇你的戰鬥裝備】</div>
+      <div class="equip-grid">
+        <div class="equip-card selected" data-equip="黃金聖劍" data-icon="⚔️" onclick="selectEquipment(this)">
+          <span class="equip-icon">⚔️</span>
+          <div class="equip-name">黃金聖劍</div>
+          <div class="equip-desc">蘊含王者霸氣的聖劍，出拳自帶金色斬擊氣場！</div>
+        </div>
+
+        <div class="equip-card" data-equip="魔法魔杖" data-icon="🪄" onclick="selectEquipment(this)">
+          <span class="equip-icon">🪄</span>
+          <div class="equip-name">魔法魔杖</div>
+          <div class="equip-desc">凝聚星辰魔力的法杖，能預知對手的出拳軌跡！</div>
+        </div>
+
+        <div class="equip-card" data-equip="爆擊鍵盤" data-icon="⌨️" onclick="selectEquipment(this)">
+          <span class="equip-icon">⌨️</span>
+          <div class="equip-name">爆擊鍵盤</div>
+          <div class="equip-desc">工程師最強神器，每秒敲擊打出最高邏輯爆擊！</div>
+        </div>
+      </div>
+
+      <!-- 開始冒險與新手木杖彩蛋按鈕 -->
+      <div class="action-row">
+        <button class="btn-primary" onclick="startGame(false)">
+          🔥 裝備完成！開始 5 勝制大對決
+        </button>
+        <button class="btn-easter-egg" onclick="startGame(true)">
+          ⚠️ 跳過裝備選擇（觸發系統彩蛋：新手木杖）
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         畫面二：5勝制決鬥競技場
+         ========================================== -->
+    <section class="screen" id="battleScreen">
+      <!-- 系統廣播橫幅 -->
+      <div class="system-broadcast">
+        <span class="broadcast-tag">📢 系統廣播</span>
+        <span id="broadcastText">歡迎勇敢的冒險者！</span>
+      </div>
+
+      <!-- 記分板 HUD -->
+      <div class="hud-board">
+        <!-- 玩家狀態 -->
+        <div class="fighter-info">
+          <div class="fighter-name-row">
+            <span id="hudPlayerName">冒險者</span>
+            <span class="weapon-pill" id="hudPlayerEquip">⚔️ 黃金聖劍</span>
+          </div>
+          <div class="win-crystals" id="playerCrystals">
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+          </div>
+        </div>
+
+        <!-- 回合數 -->
+        <div class="round-badge">
+          <div class="round-label">ROUND</div>
+          <div class="round-number" id="roundDisplay">第 1 回合</div>
+        </div>
+
+        <!-- 電腦魔王狀態 -->
+        <div class="fighter-info computer">
+          <div class="fighter-name-row">
+            <span class="weapon-pill ai">🤖 演算法核心</span>
+            <span>魔王 AI</span>
+          </div>
+          <div class="win-crystals" id="aiCrystals">
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+            <div class="crystal">★</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中央出拳對決舞台 -->
+      <div class="battle-stage">
+        <div class="hand-card">
+          <div class="hand-avatar" id="playerHandAvatar">❓</div>
+          <div class="hand-choice-text" id="playerChoiceLabel">等待出拳...</div>
+        </div>
+
+        <div class="vs-emblem">VS</div>
+
+        <div class="hand-card">
+          <div class="hand-avatar ai" id="aiHandAvatar">🤖</div>
+          <div class="hand-choice-text" id="aiChoiceLabel">準備迎戰</div>
+        </div>
+      </div>
+
+      <!-- 回合勝負提示橫幅 -->
+      <div class="result-banner" id="resultBanner">
+        規則：先獲得 5 勝的一方就是最終贏家！請選擇你的出拳！
+      </div>
+
+      <!-- 玩家出拳按鈕區 -->
+      <div class="controls-grid">
+        <button class="move-btn" id="btnScissors" onclick="playRound('剪刀')">
+          <span class="move-emoji">✌️</span>
+          <span class="move-label">剪刀</span>
+          <span class="move-key">快捷鍵 [1] / [A]</span>
+        </button>
+
+        <button class="move-btn" id="btnRock" onclick="playRound('石頭')">
+          <span class="move-emoji">✊</span>
+          <span class="move-label">石頭</span>
+          <span class="move-key">快捷鍵 [2] / [S]</span>
+        </button>
+
+        <button class="move-btn" id="btnPaper" onclick="playRound('布')">
+          <span class="move-emoji">✋</span>
+          <span class="move-label">布</span>
+          <span class="move-key">快捷鍵 [3] / [D]</span>
+        </button>
+      </div>
+
+      <!-- 戰鬥日誌（忠實呈現 Python 終端機輸出樂趣） -->
+      <div class="combat-log" id="combatLog"></div>
+    </section>
+
+    <!-- ==========================================
+         畫面三：最終結算畫面
+         ========================================== -->
+    <section class="screen" id="settlementScreen">
+      <div class="settlement-box">
+        <div class="trophy-icon" id="settlementIcon">🏆</div>
+        <h2 class="settlement-title victory" id="settlementTitle">🌟 剪刀石頭布大師 🌟</h2>
+        <div class="final-score-pill" id="finalScoreText">5 : 0</div>
+        <p class="settlement-msg" id="settlementMessage">
+          恭喜你擊敗了電腦，成為剪刀石頭布大師！
+        </p>
+
+        <div class="settlement-btns">
+          <button class="btn-primary" onclick="replaySameLoadout()">
+            🔄 再挑戰一次 (Play Again)
+          </button>
+          <button class="btn-secondary" onclick="backToSetup()">
+            🏠 更換裝備與名字
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    /* ==========================================
+       1. Web Audio API 遊戲音效合成器（免外部音效檔）
+       ========================================== */
+    let soundEnabled = true;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundToggle');
+      btn.textContent = soundEnabled ? '🔊 音效：開啟' : '🔇 音效：靜音';
+    }
+
+    function playTone(freq, type, duration, delay = 0, vol = 0.15) {
+      if (!soundEnabled) return;
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + delay);
+      osc.stop(audioCtx.currentTime + delay + duration);
+    }
+
+    const sfx = {
+      click: () => playTone(600, 'sine', 0.08, 0, 0.12),
+      tick: () => playTone(440, 'triangle', 0.07, 0, 0.1),
+      winRound: () => {
+        playTone(523.25, 'triangle', 0.12, 0, 0.15);
+        playTone(659.25, 'triangle', 0.12, 0.08, 0.15);
+        playTone(783.99, 'triangle', 0.22, 0.16, 0.18);
+      },
+      loseRound: () => {
+        playTone(300, 'sawtooth', 0.15, 0, 0.12);
+        playTone(220, 'sawtooth', 0.25, 0.1, 0.12);
+      },
+      drawRound: () => {
+        playTone(440, 'sine', 0.1, 0, 0.12);
+        playTone(440, 'sine', 0.12, 0.12, 0.12);
+      },
+      victory: () => {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((n, i) => playTone(n, 'triangle', 0.25, i * 0.12, 0.18));
+      },
+      defeat: () => {
+        const notes = [392.00, 349.23, 329.63, 261.63];
+        notes.forEach((n, i) => playTone(n, 'sawtooth', 0.28, i * 0.15, 0.12));
+      }
+    };
+
+    /* ==========================================
+       2. 遊戲核心狀態變數（對應 Python 變數結構）
+       ========================================== */
+    const state = {
+      playerName: '勇敢的冒險者',
+      equipment: '黃金聖劍',
+      equipIcon: '⚔️',
+      playerWins: 0,
+      computerWins: 0,
+      roundNum: 1,
+      isAnimating: false
+    };
+
+    const options = ['剪刀', '石頭', '布'];
+    const emojiMap = {
+      '剪刀': '✌️',
+      '石頭': '✊',
+      '布': '✋'
+    };
+
+    /* ==========================================
+       3. 畫面切換與裝備選擇邏輯
+       ========================================== */
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function selectEquipment(cardEl) {
+      sfx.click();
+      document.querySelectorAll('.equip-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+      state.equipment = cardEl.dataset.equip;
+      state.equipIcon = cardEl.dataset.icon;
+    }
+
+    // 開始冒險（對應 Python 登入與裝備賦予邏輯）
+    function startGame(isEasterEgg) {
+      sfx.click();
+      const inputVal = document.getElementById('playerNameInput').value.trim();
+      state.playerName = inputVal || '無名勇者';
+
+      if (isEasterEgg) {
+        // 對應 Python: else -> 無效選擇，系統為你自動配備【新手木杖】！
+        state.equipment = '新手木杖';
+        state.equipIcon = '🪵';
+      } else {
+        const selectedCard = document.querySelector('.equip-card.selected');
+        if (selectedCard) {
+          state.equipment = selectedCard.dataset.equip;
+          state.equipIcon = selectedCard.dataset.icon;
+        }
+      }
+
+      resetBattleStats(isEasterEgg);
+      showScreen('battleScreen');
+    }
+
+    // 重置戰鬥數值（對應 Python 進入 while player_wins < 5 and computer_wins < 5 前的初始化）
+    function resetBattleStats(isEasterEgg = false) {
+      state.playerWins = 0;
+      state.computerWins = 0;
+      state.roundNum = 1;
+      state.isAnimating = false;
+
+      // 更新系統廣播
+      const broadcastEl = document.getElementById('broadcastText');
+      if (isEasterEgg) {
+        broadcastEl.innerHTML = `⚠️ 無效選擇，系統為冒險者 <strong>【${escapeHtml(state.playerName)}】</strong> 自動配備 <strong>【🪵 新手木杖】</strong>！`;
+      } else {
+        broadcastEl.innerHTML = `歡迎勇敢的冒險者 <strong>【${escapeHtml(state.playerName)}】</strong>！你已經裝備了 <strong>【${state.equipIcon} ${state.equipment}】</strong>，準備迎接挑戰！`;
+      }
+
+      // 更新 HUD
+      document.getElementById('hudPlayerName').textContent = state.playerName;
+      document.getElementById('hudPlayerEquip').textContent = `${state.equipIcon} ${state.equipment}`;
+      updateScoreCrystals();
+      document.getElementById('roundDisplay').textContent = `第 ${state.roundNum} 回合`;
+
+      // 重置舞台與提示
+      document.getElementById('playerHandAvatar').textContent = state.equipIcon;
+      document.getElementById('aiHandAvatar').textContent = '🤖';
+      document.getElementById('playerChoiceLabel').textContent = '等待出拳...';
+      document.getElementById('aiChoiceLabel').textContent = '準備迎戰';
+
+      const banner = document.getElementById('resultBanner');
+      banner.className = 'result-banner';
+      banner.textContent = '規則：先獲得 5 勝的一方就是最終贏家！請選擇你的出拳！';
+
+      // 清空並初始化戰鬥紀錄
+      const logEl = document.getElementById('combatLog');
+      logEl.innerHTML = '';
+      appendLog(`=== ✊✋✌️ 剪刀石頭布 終極大對決 開始！ ===`);
+      appendLog(`冒險者【${state.playerName}】手持【${state.equipment}】踏入競技場！`);
+      setButtonsDisabled(false);
+    }
+
+    /* ==========================================
+       4. 單回合猜拳對決邏輯（忠實還原 Python 判斷）
+       ========================================== */
+    function playRound(playerChoice) {
+      if (state.isAnimating) return;
+      state.isAnimating = true;
+      setButtonsDisabled(true);
+
+      const playerAvatar = document.getElementById('playerHandAvatar');
+      const aiAvatar = document.getElementById('aiHandAvatar');
+      const banner = document.getElementById('resultBanner');
+
+      // 出拳前集氣動畫
+      playerAvatar.textContent = '✊';
+      aiAvatar.textContent = '✊';
+      playerAvatar.classList.add('shaking');
+      aiAvatar.classList.add('shaking');
+
+      document.getElementById('playerChoiceLabel').textContent = '集氣中...';
+      document.getElementById('aiChoiceLabel').textContent = '運算中...';
+      banner.className = 'result-banner';
+      banner.textContent = '✊ 剪刀、石頭、布......';
+      sfx.tick();
+
+      setTimeout(() => {
+        sfx.tick();
+      }, 220);
+
+      // 揭曉勝負
+      setTimeout(() => {
+        playerAvatar.classList.remove('shaking');
+        aiAvatar.classList.remove('shaking');
+
+        // 電腦隨機出拳（對應 Python: computer_choice = random.choice(options)）
+        const computerChoice = options[Math.floor(Math.random() * options.length)];
+
+        playerAvatar.textContent = emojiMap[playerChoice];
+        aiAvatar.textContent = emojiMap[computerChoice];
+        document.getElementById('playerChoiceLabel').textContent = `你出了：${playerChoice}`;
+        document.getElementById('aiChoiceLabel').textContent = `電腦出了：${computerChoice}`;
+
+        appendLog(`--- 第 ${state.roundNum} 回合 --- 你出【${playerChoice}】 vs 電腦出【${computerChoice}】`);
+
+        // 勝負判斷（完全對應 Python 邏輯）
+        if (playerChoice === computerChoice) {
+          banner.className = 'result-banner draw';
+          banner.textContent = '🤝 平手！沒有人得分。';
+          appendLog(`👉 平手！沒有人得分。`);
+          sfx.drawRound();
+        } else if (
+          (playerChoice === '剪刀' && computerChoice === '布') ||
+          (playerChoice === '石頭' && computerChoice === '剪刀') ||
+          (playerChoice === '布' && computerChoice === '石頭')
+        ) {
+          state.playerWins += 1;
+          banner.className = 'result-banner win';
+          banner.textContent = `🎉 這回合你贏了！【${state.equipment}】發動攻擊！`;
+          appendLog(`🎉 這回合你贏了！目前戰況 ${state.playerWins} : ${state.computerWins}`);
+          sfx.winRound();
+          triggerArenaShake();
+        } else {
+          state.computerWins += 1;
+          banner.className = 'result-banner lose';
+          banner.textContent = '💥 這回合電腦贏了！魔王 AI 搶下一分！';
+          appendLog(`💥 這回合電腦贏了！目前戰況 ${state.playerWins} : ${state.computerWins}`);
+          sfx.loseRound();
+          triggerArenaShake();
+        }
+
+        updateScoreCrystals();
+
+        // 檢查是否有人達到 5 勝（對應 Python: while player_wins < 5 and computer_wins < 5）
+        if (state.playerWins >= 5 || state.computerWins >= 5) {
+          setTimeout(() => {
+            finishGame();
+          }, 1100);
+        } else {
+          state.roundNum += 1;
+          document.getElementById('roundDisplay').textContent = `第 ${state.roundNum} 回合`;
+          state.isAnimating = false;
+          setButtonsDisabled(false);
+        }
+      }, 520);
+    }
+
+    // 更新 5 顆勝場晶體燈號
+    function updateScoreCrystals() {
+      const pCrystals = document.querySelectorAll('#playerCrystals .crystal');
+      const aiCrystals = document.querySelectorAll('#aiCrystals .crystal');
+
+      pCrystals.forEach((c, idx) => {
+        c.classList.toggle('active-player', idx < state.playerWins);
+      });
+      aiCrystals.forEach((c, idx) => {
+        c.classList.toggle('active-ai', idx < state.computerWins);
+      });
+    }
+
+    function triggerArenaShake() {
+      const container = document.getElementById('gameContainer');
+      container.classList.remove('arena-shake');
+      void container.offsetWidth; // 觸發 reflow 重新播放動畫
+      container.classList.add('arena-shake');
+    }
+
+    function setButtonsDisabled(disabled) {
+      document.getElementById('btnScissors').disabled = disabled;
+      document.getElementById('btnRock').disabled = disabled;
+      document.getElementById('btnPaper').disabled = disabled;
+    }
+
+    function appendLog(text) {
+      const logEl = document.getElementById('combatLog');
+      const p = document.createElement('p');
+      p.textContent = text;
+      logEl.appendChild(p);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    /* ==========================================
+       5. 最終結算與「再玩一次」迴圈
+       ========================================== */
+    function finishGame() {
+      const isPlayerWinner = state.playerWins === 5;
+      const iconEl = document.getElementById('settlementIcon');
+      const titleEl = document.getElementById('settlementTitle');
+      const scoreEl = document.getElementById('finalScoreText');
+      const msgEl = document.getElementById('settlementMessage');
+
+      if (isPlayerWinner) {
+        iconEl.textContent = '🏆';
+        titleEl.textContent = '🌟 剪刀石頭布大師 🌟';
+        titleEl.className = 'settlement-title victory';
+        scoreEl.textContent = `${state.playerWins} : ${state.computerWins}`;
+        msgEl.textContent = `恭喜冒險者【${state.playerName}】手持【${state.equipment}】，以 ${state.playerWins} : ${state.computerWins} 擊敗了電腦，成為真正的剪刀石頭布大師！`;
+        sfx.victory();
+        launchConfetti();
+      } else {
+        iconEl.textContent = '💻';
+        titleEl.textContent = '⚡ 魔王 AI 獲得勝利 ⚡';
+        titleEl.className = 'settlement-title defeat';
+        scoreEl.textContent = `${state.playerWins} : ${state.computerWins}`;
+        msgEl.textContent = `很可惜，電腦以 ${state.computerWins} : ${state.playerWins} 獲得了最終勝利，調整好【${state.equipment}】的狀態，下次再來挑戰吧！`;
+        sfx.defeat();
+      }
+
+      showScreen('settlementScreen');
+    }
+
+    // 對應 Python: play_again.lower() == 'y'
+    function replaySameLoadout() {
+      sfx.click();
+      stopConfetti();
+      resetBattleStats(state.equipment === '新手木杖');
+      showScreen('battleScreen');
+    }
+
+    function backToSetup() {
+      sfx.click();
+      stopConfetti();
+      showScreen('setupScreen');
+    }
+
+    /* ==========================================
+       6. 鍵盤快捷鍵支援 (1/2/3 或 A/S/D)
+       ========================================== */
+    document.addEventListener('keydown', (e) => {
+      const battleActive = document.getElementById('battleScreen').classList.contains('active');
+      if (!battleActive || state.isAnimating) return;
+
+      const key = e.key.toLowerCase();
+      if (key === '1' || key === 'a') playRound('剪刀');
+      if (key === '2' || key === 's') playRound('石頭');
+      if (key === '3' || key === 'd') playRound('布');
+    });
+
+    /* ==========================================
+       7. 勝利慶祝彩帶粒子特效
+       ========================================== */
+    let confettiAnimId = null;
+    function launchConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const colors = ['#fbbf24', '#38bdf8', '#f43f5e', '#10b981', '#a855f7'];
+      const pieces = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        w: Math.random() * 10 + 6,
+        h: Math.random() * 6 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedY: Math.random() * 3 + 2,
+        speedX: Math.random() * 2 - 1,
+        angle: Math.random() * 360
+      }));
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.angle += 4;
+          if (p.y > canvas.height) p.y = -10;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.angle * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        confettiAnimId = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) {
+        cancelAnimationFrame(confettiAnimId);
+        confettiAnimId = null;
+      }
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+  </script>
+</body>
+</html>
